@@ -32,7 +32,7 @@ def get_dataframe_from_openml(task_id, flow_id, num_runs, relevant_parameters, e
             raise ValueError('No evaluations for this task. ')
         with open(evaluations_cache_path, 'wb') as fp:
             pickle.dump(evaluations, fp)
-        print(len(evaluations))
+
         # setups
         setup_ids = []
         for run_id, evaluation in evaluations.items():
@@ -44,7 +44,7 @@ def get_dataframe_from_openml(task_id, flow_id, num_runs, relevant_parameters, e
                 setups.update(openml.setups.list_setups(setup=setup_ids[i*500:]))
             else:
                 setups.update(openml.setups.list_setups(setup=setup_ids[i*500:i*500+500]))
-        print(len(setups))
+
         with open(setups_cache_path, 'wb') as fp:
             pickle.dump(setups, fp)
 
