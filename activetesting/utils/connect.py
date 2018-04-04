@@ -4,7 +4,7 @@ import openml
 import os
 import pandas as pd
 import pickle
-
+import math
 
 def get_dataframe_from_openml(task_id, flow_id, num_runs, relevant_parameters, evaluation_measure, cache_directory):
     if 'y' in relevant_parameters:
@@ -19,19 +19,32 @@ def get_dataframe_from_openml(task_id, flow_id, num_runs, relevant_parameters, e
     evaluations_cache_path = cache_directory + '/' + str(flow_id) + '/' + str(task_id) + '/evaluations.pkl'
     setups_cache_path = cache_directory + '/' + str(flow_id) + '/' + str(task_id) + '/setups.pkl'
     if not os.path.isfile(evaluations_cache_path) or not os.path.isfile(setups_cache_path):
-        evaluations = openml.evaluations.list_evaluations(evaluation_measure, size=num_runs, task=[task_id], flow=[flow_id])
+        evaluations = {}
+        for i in range(0, math.ceil(num_runs/500)):
+            if i == math.ceil(num_runs/500) - 1:
+                if num_runs%500 == 0:
+                    evaluations.update(openml.evaluations.list_evaluations(evaluation_measure, size=500, task=[task_id], flow=[flow_id], offset=i*500))
+                else:
+                    evaluations.update(openml.evaluations.list_evaluations(evaluation_measure, size=num_runs%500, task=[task_id], flow=[flow_id], offset=i*500))
+            else:
+                evaluations.update(openml.evaluations.list_evaluations(evaluation_measure, size=500, task=[task_id], flow=[flow_id], offset=i*500))
         if len(evaluations) == 0:
             raise ValueError('No evaluations for this task. ')
-
         with open(evaluations_cache_path, 'wb') as fp:
             pickle.dump(evaluations, fp)
-
+        print(len(evaluations))
         # setups
         setup_ids = []
         for run_id, evaluation in evaluations.items():
             setup_ids.append(evaluation.setup_id)
-        setups = openml.setups.list_setups(setup=setup_ids)
-
+        
+        setups = {}
+        for i in range(0, math.ceil(len(setup_ids)/500)):
+            if i == math.ceil(num_runs/500) - 1:
+                setups.update(openml.setups.list_setups(setup=setup_ids[i*500:]))
+            else:
+                setups.update(openml.setups.list_setups(setup=setup_ids[i*500:i*500+500]))
+        print(len(setups))
         with open(setups_cache_path, 'wb') as fp:
             pickle.dump(setups, fp)
 
@@ -94,7 +107,7 @@ def get_dataframe_from_openml(task_id, flow_id, num_runs, relevant_parameters, e
     if dataframe.shape[1] != len(relevant_parameters) + 1: # plus 1 for y data
         raise ValueError()
 
-    dataframe = dataframe.reindex_axis(sorted(dataframe.columns), axis=1)
+    dataframe = dataframe.reindex(sorted(dataframe.columns), axis=1)
 
     return dataframe
 

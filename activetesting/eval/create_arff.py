@@ -15,19 +15,18 @@ def parse_args():
     parser.add_argument('--study_id', type=str, default='OpenML100', help='the tag to obtain the tasks from')
     parser.add_argument('--classifier', type=str, default='random_forest', help='openml flow id')
     parser.add_argument('--scoring', type=str, default='predictive_accuracy')
-    parser.add_argument('--num_runs', type=int, default=500, help='max runs to obtain from openml')
+    parser.add_argument('--num_runs', type=int, default=1000, help='max runs to obtain from openml')
     parser.add_argument('--prevent_model_cache', action='store_true', help='prevents loading old models from cache')
     parser.add_argument('--openml_server', type=str, default=None, help='the openml server location')
     parser.add_argument('--openml_apikey', type=str, default=None, help='the apikey to authenticate to OpenML')
     parser.add_argument('--num_tasks', type=int, default=None, help='limit number of tasks (for testing)')
     return parser.parse_args()
 
-
 if __name__ == '__main__':
     args = parse_args()
     study = openml.study.get_study(args.study_id, 'tasks')
     setup_data_all = None
-
+    
     if args.classifier == 'random_forest':
         flow_id = 6969
         relevant_parameters = {"bootstrap": "nominal", "max_features": "numeric", "min_samples_leaf": "numeric",
